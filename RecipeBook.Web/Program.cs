@@ -1,6 +1,7 @@
 using RecipeBook.Web.Components;
 using Microsoft.EntityFrameworkCore;
 using RecipeBook.Web.Data;
+using Microsoft.AspNetCore.Identity;
 
 
 
@@ -9,6 +10,24 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+{
+    options.Password.RequireDigit = false;
+    options.Password.RequireUppercase = false;
+    options.Password.RequireLowercase = false;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequiredLength = 6;
+})
+.AddEntityFrameworkStores<AppDbContext>()
+.AddDefaultTokenProviders()
+.AddDefaultUI();
+
+builder.Services.AddAuthentication();
+builder.Services.AddAuthorization();
+builder.Services.AddCascadingAuthenticationState();
+
+builder.Services.AddRazorPages(); 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
@@ -25,11 +44,15 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseAuthentication();
+app.UseAuthorization();
 
 
 app.UseAntiforgery();
 
 app.MapStaticAssets();
+app.MapRazorPages(); // para las páginas de Identity
+
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 

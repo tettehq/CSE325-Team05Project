@@ -58,3 +58,40 @@ h1:focus {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
     text-align: start;
 }
+
+
+
+/* Avatar simple con inicial */
+.user-avatar {
+  width: 28px;
+  height: 28px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4f46e5, #22c55e);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+/* Ajuste de dropdown en nav */
+.navbar .dropdown-menu {
+  min-width: 220px;
+  border-radius: 12px;
+}
+
+/* Suavizado de botones */
+.btn {
+  border-radius: 999px;
+}
+
+/* Hover sutil */
+.btn-outline-primary:hover {
+  box-shadow: 0 6px 14px rgba(0,0,0,.08);
+}
+
+/* Espaciado en nav para que respire */
+.navbar-nav > .nav-item {
+  margin-left: .25rem;
+  margin-right: .25rem;
+}
