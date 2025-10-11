@@ -56,4 +56,12 @@ app.MapRazorPages(); // para las páginas de Identity
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
+
+// Logout endpoint (GET) — cierra sesión y redirige al home
+app.MapGet("/logout", async (SignInManager<ApplicationUser> signInManager) =>
+{
+    await signInManager.SignOutAsync();
+    return Results.Redirect("/");
+});
+
 app.Run();

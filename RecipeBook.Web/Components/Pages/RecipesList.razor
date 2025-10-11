@@ -100,7 +100,11 @@ else
         @foreach (var r in recipes)
         {
             <tr>
-                <td>@r.Title</td>
+                <td>
+                    <a href="/recipes/@r.Id" class="link-primary text-decoration-none">
+                        @r.Title
+                    </a>
+                </td>
                 <td>@r.Category</td>
                 <td>@r.CreatedAt.ToLocalTime().ToString("g")</td>
                 <td class="text-end">
