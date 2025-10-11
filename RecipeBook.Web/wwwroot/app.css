@@ -95,3 +95,88 @@ h1:focus {
   margin-left: .25rem;
   margin-right: .25rem;
 }
+
+
+
+/* fondo general suave */
+body {
+  background: linear-gradient(180deg, #0f172a 0%, #111827 35%, #0b1020 100%);
+}
+
+/* contenedor principal más angosto y centrado en pantallas grandes */
+.container {
+  max-width: 840px;
+}
+
+/* títulos y textos más legibles sobre fondo oscuro */
+h1, h2, h3, h4, h5, h6, p, label, .nav-link, a, span, li {
+  color: #e5e7eb;
+}
+
+/* tarjetas y paneles */
+.card, .border, .shadow, .list-group, .modal-content {
+  border-radius: 14px !important;
+  border-color: transparent !important;
+  background: #1f2937 !important;
+  color: #e5e7eb !important;
+  box-shadow: 0 10px 25px rgba(0,0,0,.25) !important;
+}
+
+/* inputs */
+input.form-control, input[type="email"], input[type="password"],
+select.form-select, textarea.form-control {
+  background: #0b1020 !important;
+  color: #e5e7eb !important;
+  border: 1px solid #374151 !important;
+  border-radius: 12px !important;
+}
+input.form-control:focus, select.form-select:focus, textarea.form-control:focus {
+  outline: none;
+  border-color: #60a5fa !important;
+  box-shadow: 0 0 0 .2rem rgba(96,165,250,.2) !important;
+}
+
+/* botones */
+.btn {
+  border-radius: 999px !important;
+}
+.btn-primary {
+  background: #4f46e5 !important;
+  border-color: #4f46e5 !important;
+}
+.btn-primary:hover {
+  filter: brightness(1.07);
+}
+.btn-outline-primary {
+  border-color: #60a5fa !important;
+  color: #e5e7eb !important;
+}
+.btn-outline-primary:hover {
+  background: #1e3a8a !important;
+}
+
+/* links */
+a { color: #93c5fd; }
+a:hover { color: #bfdbfe; }
+
+/* validaciones */
+.text-danger, .validation-message {
+  color: #fca5a5 !important;
+}
+
+/* navbar lateral más limpio */
+.nav-link {
+  border-radius: 10px;
+}
+.nav-link.active, .nav-link:hover {
+  background: rgba(255,255,255,.08);
+}
+
+/* avatar (si usás el del _LoginPartial) */
+.user-avatar {
+  width: 28px; height: 28px;
+  display: inline-grid; place-items: center;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4f46e5, #22c55e);
+  color: #fff; font-weight: 700; font-size: .9rem;
+}

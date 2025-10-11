@@ -1,0 +1,101 @@
+@page "/recipes/new"
+@using System.ComponentModel.DataAnnotations
+@using RecipeBook.Web.Data
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+
+@inject AppDbContext Db
+@inject NavigationManager Nav
+@inject AuthenticationStateProvider AuthStateProvider
+@rendermode InteractiveServer
+
+<h3>New Recipe</h3>
+
+<EditForm Model="model" OnValidSubmit="HandleValidSubmit" FormName="recipe-create"  OnInvalidSubmit="HandleInvalidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label class="form-label">Title</label>
+        <InputText class="form-control" @bind-Value="model.Title" />
+        <ValidationMessage For="@(() => model.Title)" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Category (optional)</label>
+        <InputText class="form-control" @bind-Value="model.Category" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Ingredients</label>
+        <InputTextArea class="form-control" rows="4" @bind-Value="model.Ingredients" />
+        <small class="text-muted">Separate by lines or commas.</small>
+        <ValidationMessage For="@(() => model.Ingredients)" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Steps</label>
+        <InputTextArea class="form-control" rows="6" @bind-Value="model.Steps" />
+        <ValidationMessage For="@(() => model.Steps)" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Save Recipe</button>
+    <button type="button" class="btn btn-outline-primary ms-2" @onclick="Cancel">Cancel</button>
+</EditForm>
+
+@code {
+    // Usamos un view-model para no tocar OwnerId/Fechas desde el formulario
+    private RecipeInput model = new();
+
+    private async Task HandleValidSubmit()
+    {
+        // Obtener el usuario logueado
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        var ownerId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+        var entity = new Recipe
+        {
+            Title = model.Title.Trim(),
+            Category = string.IsNullOrWhiteSpace(model.Category) ? null : model.Category.Trim(),
+            Ingredients = model.Ingredients.Trim(),
+            Steps = model.Steps.Trim(),
+            OwnerId = ownerId,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        Db.Recipes.Add(entity);
+        await Db.SaveChangesAsync();
+
+        // Volver al listado (lo haremos en /recipes)
+        Nav.NavigateTo("/recipes");
+    }
+
+    private void Cancel() => Nav.NavigateTo("/recipes");
+
+    // View-model con validaciones
+    public class RecipeInput
+    {
+        [Required, StringLength(120)]
+        public string Title { get; set; } = string.Empty;
+
+        [StringLength(60)]
+        public string? Category { get; set; }
+
+        [Required]
+        public string Ingredients { get; set; } = string.Empty;
+
+        [Required]
+        public string Steps { get; set; } = string.Empty;
+    }
+
+    private void HandleInvalidSubmit(EditContext ctx)
+{
+    Console.WriteLine("Invalid submit. Fields:");
+    foreach (var msg in ctx.GetValidationMessages())
+        Console.WriteLine($" - {msg}");
+}
+}
+
+

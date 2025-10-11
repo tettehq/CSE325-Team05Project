@@ -1,0 +1,168 @@
+@page "/recipes/edit/{id:int}"
+@rendermode InteractiveServer
+@using System.ComponentModel.DataAnnotations
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authorization
+@using RecipeBook.Web.Data
+@attribute [Authorize]
+@inject AppDbContext Db
+@inject NavigationManager Nav
+@inject AuthenticationStateProvider AuthState
+@inject IJSRuntime JS
+
+<h3>Edit recipe</h3>
+
+@if (isLoading)
+{
+    <p><em>Loading…</em></p>
+}
+else if (notFound)
+{
+    <div class="alert alert-danger">Recipe not found.</div>
+}
+else if (!canManage)
+{
+    <div class="alert alert-warning">You don't have permission to edit this recipe.</div>
+}
+else
+{
+    <EditForm Model="vm" OnValidSubmit="Save">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="mb-3">
+            <label class="form-label">Title</label>
+            <InputText class="form-control" @bind-Value="vm.Title" />
+            <ValidationMessage For="@(() => vm.Title)" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Category (optional)</label>
+            <InputText class="form-control" @bind-Value="vm.Category" />
+            <ValidationMessage For="@(() => vm.Category)" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Ingredients</label>
+            <InputTextArea class="form-control" rows="4" @bind-Value="vm.Ingredients" />
+            <small class="text-muted">Separate by lines or commas.</small>
+            <ValidationMessage For="@(() => vm.Ingredients)" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Steps</label>
+            <InputTextArea class="form-control" rows="6" @bind-Value="vm.Steps" />
+            <ValidationMessage For="@(() => vm.Steps)" />
+        </div>
+
+        <div class="d-flex gap-2">
+            <button class="btn btn-primary" disabled="@isSaving">
+                @(isSaving ? "Saving..." : "Save")
+            </button>
+            <button type="button" class="btn btn-secondary" @onclick="Cancel" disabled="@isSaving">
+                Cancel
+            </button>
+            <button type="button" class="btn btn-danger ms-auto" @onclick="DeleteHere" disabled="@isSaving">
+                Delete
+            </button>
+        </div>
+    </EditForm>
+}
+
+@code {
+    [Parameter] public int id { get; set; }
+
+    // Entity real (DB)
+    private Recipe? entity;
+
+    // ViewModel para el form (igual idea que en /new)
+    private RecipeInput vm = new();
+
+    private bool isLoading = true;
+    private bool notFound = false;
+    private bool canManage = false;
+    private bool isSaving = false;
+    private string? currentUserId;
+    private bool isAdmin;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await AuthState.GetAuthenticationStateAsync();
+        var user = auth.User;
+        currentUserId = user.FindFirstValue(ClaimTypes.NameIdentifier);
+        isAdmin = user.IsInRole("Admin");
+
+        entity = await Db.Recipes.FindAsync(id);
+
+        if (entity is null)
+        {
+            notFound = true;
+            isLoading = false;
+            return;
+        }
+
+        canManage = isAdmin || entity.OwnerId == currentUserId;
+
+        // Mapear entity -> VM
+        vm = new RecipeInput
+        {
+            Title = entity.Title ?? "",
+            Category = entity.Category,
+            Ingredients = entity.Ingredients ?? "",
+            Steps = entity.Steps ?? ""
+        };
+
+        isLoading = false;
+    }
+
+    private async Task Save()
+    {
+        if (entity is null || !canManage) return;
+        isSaving = true;
+
+        // Mapear VM -> entity
+        entity.Title = vm.Title.Trim();
+        entity.Category = string.IsNullOrWhiteSpace(vm.Category) ? null : vm.Category.Trim();
+        entity.Ingredients = vm.Ingredients?.Trim() ?? "";
+        entity.Steps = vm.Steps?.Trim() ?? "";
+        entity.UpdatedAt = DateTime.UtcNow;
+
+        Db.Recipes.Update(entity);
+        await Db.SaveChangesAsync();
+
+        isSaving = false;
+        Nav.NavigateTo("/recipes");
+    }
+
+    private void Cancel() => Nav.NavigateTo("/recipes");
+
+    private async Task DeleteHere()
+    {
+        if (entity is null || !canManage) return;
+        var ok = await JS.InvokeAsync<bool>("confirm", "Are you sure you want to delete this recipe?");
+        if (!ok) return;
+
+        isSaving = true;
+        Db.Recipes.Remove(entity);
+        await Db.SaveChangesAsync();
+        isSaving = false;
+
+        Nav.NavigateTo("/recipes");
+    }
+
+    // View-model con validaciones (alinea con tu página /recipes/new)
+    public class RecipeInput
+    {
+        [Required, StringLength(120)]
+        public string Title { get; set; } = string.Empty;
+
+        [StringLength(60)]
+        public string? Category { get; set; }
+
+        [Required]
+        public string Ingredients { get; set; } = string.Empty;
+
+        [Required]
+        public string Steps { get; set; } = string.Empty;
+    }
+}
