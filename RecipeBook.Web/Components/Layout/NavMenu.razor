@@ -70,11 +70,4 @@
     </AuthorizeView>
 </div>
 
-@code {
-    private async Task Logout()
-    {
-        Console.WriteLine("Logging out...");
-        await SignInManager.SignOutAsync();
-        Nav.NavigateTo("/", forceLoad: true);
-    }
-}
+
