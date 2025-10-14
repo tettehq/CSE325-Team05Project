@@ -1,7 +1,253 @@
 ﻿@page "/"
+@using RecipeBook.Web.Data
+@using RecipeBook.Web.Services
+@using Microsoft.EntityFrameworkCore
+@inject RecipeService RecipeService
+@inject IJSRuntime JS
 
-<PageTitle>Home</PageTitle>
+<PageTitle>RecipeBook - Home</PageTitle>
 
-<h1>Hello, world!</h1>
+<div class="home-container">
+    <!-- Hero Section with Slideshow -->
+    <section class="hero-section">
+        <div class="container">
+            <h1 class="hero-title">Welcome to RecipeBook</h1>
+            <p class="hero-subtitle">Discover delicious recipes from our community</p>
+            
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="alert alert-warning">
+                    <strong>Database Issue:</strong> @errorMessage
+                    <div class="mt-2">
+                        <small>Run 'dotnet ef database update' in the terminal to create the database.</small>
+                    </div>
+                </div>
+            }
+            
+            @if (featuredRecipes == null)
+            {
+                <div class="loading-spinner">
+                    <i class="fas fa-spinner fa-spin me-2"></i>Loading featured recipes...
+                </div>
+            }
+            else if (!featuredRecipes.Any())
+            {
+                <div class="no-recipes">
+                    <p>No recipes available yet. 
+                       <AuthorizeView>
+                           <Authorized>
+                               <a href="/recipes/new" class="text-decoration-underline">Create the first one!</a>
+                           </Authorized>
+                           <NotAuthorized>
+                               <a href="/Identity/Account/Register" class="text-decoration-underline">Register to create the first one!</a>
+                           </NotAuthorized>
+                       </AuthorizeView>
+                    </p>
+                </div>
+            }
+            else
+            {
+                <div class="slideshow-container">
+                    <!-- Slideshow Wrapper -->
+                    <div class="slideshow-wrapper">
+                        @for (int i = 0; i < featuredRecipes.Count; i++)
+                        {
+                            <div class="slide @(i == currentSlideIndex ? "active" : "")">
+                                <div class="recipe-card">
+                                    @if (!string.IsNullOrEmpty(featuredRecipes[i].ImagePath))
+                                    {
+                                        <img src="@featuredRecipes[i].ImagePath" 
+                                             alt="@featuredRecipes[i].Title" 
+                                             class="recipe-image" 
+                                             loading="lazy" />
+                                    }
+                                    else
+                                    {
+                                        <div class="recipe-image-placeholder">
+                                            <i class="fas fa-utensils"></i>
+                                        </div>
+                                    }
+                                    <div class="recipe-content">
+                                        <h3 class="recipe-title">@featuredRecipes[i].Title</h3>
+                                        <p class="recipe-category">
+                                            <i class="fas fa-tag me-1"></i>@featuredRecipes[i].Category
+                                        </p>
+                                        <p class="recipe-meta">
+                                            <i class="fas fa-calendar me-1"></i>
+                                            Created @featuredRecipes[i].CreatedAt.ToLocalTime().ToString("MMM dd, yyyy")
+                                        </p>
+                                        <a href="/recipes/@featuredRecipes[i].Id" class="btn-view-recipe">
+                                            <i class="fas fa-book-open me-2"></i>View Recipe
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                    
+                    <!-- Navigation Arrows -->
+                    @if (featuredRecipes.Count > 1)
+                    {
+                        <button class="slideshow-nav slideshow-prev" @onclick="PrevSlide">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <button class="slideshow-nav slideshow-next" @onclick="NextSlide">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    
+                        <!-- Dots Indicator -->
+                        <div class="slideshow-dots">
+                            @for (int i = 0; i < featuredRecipes.Count; i++)
+                            {
+                                <button class="dot @(i == currentSlideIndex ? "active" : "")" 
+                                        @onclick="() => GoToSlide(i)"></button>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </section>
 
-Welcome to your new app.
+    <!-- Quick Actions Section -->
+    <section class="quick-actions">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="action-card">
+                        <div class="action-icon">
+                            <i class="fas fa-search"></i>
+                        </div>
+                        <h4>Browse Recipes</h4>
+                        <p>Explore all our delicious recipes curated by our community of food enthusiasts.</p>
+                        <AuthorizeView>
+                            <Authorized>
+                                <a href="/recipes" class="btn btn-outline-primary">View All Recipes</a>
+                            </Authorized>
+                            <NotAuthorized>
+                                <a href="/Identity/Account/Register" class="btn btn-outline-primary">Register to Browse</a>
+                            </NotAuthorized>
+                        </AuthorizeView>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="action-card">
+                        <div class="action-icon">
+                            <i class="fas fa-plus-circle"></i>
+                        </div>
+                        <h4>Add Your Recipe</h4>
+                        <p>Share your culinary creations with the world and inspire other home chefs.</p>
+                        <AuthorizeView>
+                            <Authorized>
+                                <a href="/recipes/new" class="btn btn-outline-primary">Create Recipe</a>
+                            </Authorized>
+                            <NotAuthorized>
+                                <a href="/Identity/Account/Register" class="btn btn-outline-primary">Register to Create</a>
+                            </NotAuthorized>
+                        </AuthorizeView>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="action-card">
+                        <div class="action-icon">
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <h4>Featured Recipes</h4>
+                        <p>Discover the most popular and highly-rated recipes from our community.</p>
+                        <AuthorizeView>
+                            <Authorized>
+                                <a href="/recipes" class="btn btn-outline-primary">Explore Featured</a>
+                            </Authorized>
+                            <NotAuthorized>
+                                <a href="/Identity/Account/Register" class="btn btn-outline-primary">Register to Explore</a>
+                            </NotAuthorized>
+                        </AuthorizeView>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+@code {
+    private List<Recipe>? featuredRecipes;
+    private int currentSlideIndex = 0;
+    private Timer? autoSlideTimer;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // Use RecipeService to get featured recipes
+            featuredRecipes = await RecipeService.GetFeaturedRecipesAsync(6);
+
+            // Start auto-slide if we have recipes
+            if (featuredRecipes?.Count > 1)
+            {
+                StartAutoSlide();
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Unable to load recipes. Please try again later.";
+            Console.WriteLine($"Error loading recipes: {ex.Message}");
+        }
+    }
+
+    private void StartAutoSlide()
+    {
+        autoSlideTimer = new Timer(async _ =>
+        {
+            await InvokeAsync(() =>
+            {
+                if (featuredRecipes?.Count > 1)
+                {
+                    currentSlideIndex = (currentSlideIndex + 1) % featuredRecipes.Count;
+                    StateHasChanged();
+                }
+            });
+        }, null, 5000, 5000);
+    }
+
+    private void NextSlide()
+    {
+        if (featuredRecipes?.Count > 1)
+        {
+            currentSlideIndex = (currentSlideIndex + 1) % featuredRecipes.Count;
+            StateHasChanged();
+        }
+    }
+
+    private void PrevSlide()
+    {
+        if (featuredRecipes?.Count > 1)
+        {
+            currentSlideIndex = (currentSlideIndex - 1 + featuredRecipes.Count) % featuredRecipes.Count;
+            StateHasChanged();
+        }
+    }
+
+    private void GoToSlide(int index)
+    {
+        if (featuredRecipes?.Count > 1)
+        {
+            currentSlideIndex = index;
+            StateHasChanged();
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && featuredRecipes?.Count > 1)
+        {
+            // Ensure the timer starts after the component is rendered
+            StartAutoSlide();
+        }
+    }
+
+    public void Dispose()
+    {
+        autoSlideTimer?.Dispose();
+    }
+}

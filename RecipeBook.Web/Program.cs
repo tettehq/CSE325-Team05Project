@@ -2,14 +2,12 @@ using RecipeBook.Web.Components;
 using Microsoft.EntityFrameworkCore;
 using RecipeBook.Web.Data;
 using Microsoft.AspNetCore.Identity;
-
-
+using RecipeBook.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
-
 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 {
@@ -28,12 +26,25 @@ builder.Services.AddAuthorization();
 builder.Services.AddCascadingAuthenticationState();
 
 builder.Services.AddRazorPages(); 
+
+// Add this with other service registrations
+builder.Services.AddScoped<FileUploadService>();
+
+// Add RecipeService to DI container
+builder.Services.AddScoped<RecipeService>();
+
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-
 var app = builder.Build();
+
+// Initialize sample data
+using (var scope = app.Services.CreateScope())
+{
+    var recipeService = scope.ServiceProvider.GetRequiredService<RecipeService>();
+    await recipeService.InitializeSampleDataAsync();
+}
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
@@ -47,7 +58,6 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
-
 app.UseAntiforgery();
 
 app.MapStaticAssets();
@@ -55,7 +65,6 @@ app.MapRazorPages(); // para las páginas de Identity
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
-
 
 // Logout endpoint (GET) — cierra sesión y redirige al home
 app.MapGet("/logout", async (SignInManager<ApplicationUser> signInManager) =>

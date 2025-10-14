@@ -10,64 +10,154 @@
 @inject AuthenticationStateProvider AuthState
 @inject IJSRuntime JS
 
-<h3>Edit recipe</h3>
+<PageTitle>Edit Recipe</PageTitle>
 
-@if (isLoading)
-{
-    <p><em>Loading…</em></p>
-}
-else if (notFound)
-{
-    <div class="alert alert-danger">Recipe not found.</div>
-}
-else if (!canManage)
-{
-    <div class="alert alert-warning">You don't have permission to edit this recipe.</div>
-}
-else
-{
-    <EditForm Model="vm" OnValidSubmit="Save">
-        <DataAnnotationsValidator />
-        <ValidationSummary />
+<div class="edit-recipe-container">
+    <div class="container-wide">
+        <div class="row justify-content-center">
+            <div class="col-12 col-xl-10">
+                <div class="edit-recipe-card">
+                    <div class="edit-recipe-header">
+                        <i class="fas fa-edit me-2"></i>
+                        <h2>Edit Recipe</h2>
+                        <p class="edit-header-subtitle">Update your culinary masterpiece</p>
+                    </div>
 
-        <div class="mb-3">
-            <label class="form-label">Title</label>
-            <InputText class="form-control" @bind-Value="vm.Title" />
-            <ValidationMessage For="@(() => vm.Title)" />
+                    <div class="edit-recipe-body">
+                        @if (isLoading)
+                        {
+                            <div class="edit-loading">
+                                <i class="fas fa-spinner fa-spin me-2"></i>Loading recipe...
+                            </div>
+                        }
+                        else if (notFound)
+                        {
+                            <div class="edit-alert edit-alert-danger">
+                                <i class="fas fa-exclamation-triangle me-2"></i>Recipe not found.
+                            </div>
+                        }
+                        else if (!canManage)
+                        {
+                            <div class="edit-alert edit-alert-warning">
+                                <i class="fas fa-lock me-2"></i>You don't have permission to edit this recipe.
+                            </div>
+                        }
+                        else
+                        {
+                            <EditForm Model="vm" OnValidSubmit="Save" class="edit-recipe-form">
+                                <DataAnnotationsValidator />
+                                <ValidationSummary class="edit-alert edit-alert-danger" />
+
+                                <div class="edit-form-row">
+                                    <!-- Left Column: Image Section (you can add image upload here later) -->
+                                    <div class="edit-form-column edit-image-column">
+                                        <div class="edit-form-section">
+                                            <label class="edit-section-label">
+                                                <i class="fas fa-image me-2"></i>Recipe Image
+                                            </label>
+                                            <div class="edit-image-upload-container">
+                                                <div class="edit-upload-area">
+                                                    <div class="edit-upload-content">
+                                                        <i class="fas fa-cloud-upload-alt edit-upload-icon"></i>
+                                                        <p class="edit-upload-text">Image upload coming soon</p>
+                                                        <p class="edit-upload-subtext">Feature in development</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Right Column: Form Fields -->
+                                    <div class="edit-form-column edit-fields-column">
+                                        <!-- Recipe Title -->
+                                        <div class="edit-form-section">
+                                            <label for="title" class="edit-section-label">
+                                                <i class="fas fa-heading me-2"></i>Recipe Title *
+                                            </label>
+                                            <InputText id="title" @bind-Value="vm.Title" class="edit-form-input" 
+                                                      placeholder="Enter your delicious recipe title..." />
+                                            <ValidationMessage For="@(() => vm.Title)" class="edit-validation-error" />
+                                        </div>
+
+                                        <!-- Category -->
+                                        <div class="edit-form-section">
+                                            <label for="category" class="edit-section-label">
+                                                <i class="fas fa-tag me-2"></i>Category
+                                            </label>
+                                            <InputText id="category" @bind-Value="vm.Category" class="edit-form-input" 
+                                                      placeholder="e.g., Italian, Dessert, Vegan, Breakfast, etc." />
+                                            <div class="edit-form-hint">Helps users find your recipe easily</div>
+                                        </div>
+
+                                        <!-- Ingredients -->
+                                        <div class="edit-form-section">
+                                            <label for="ingredients" class="edit-section-label">
+                                                <i class="fas fa-list-ul me-2"></i>Ingredients *
+                                            </label>
+                                            <InputTextArea id="ingredients" @bind-Value="vm.Ingredients" class="edit-form-textarea" 
+                                                          rows="8" 
+                                                          placeholder="List each ingredient on a new line. You can use bullet points:
+• 2 cups all-purpose flour
+• 1 teaspoon salt
+• 3 cloves garlic, minced
+• 1 tablespoon olive oil
+• 1 cup grated cheese
+• Fresh herbs for garnish" />
+                                            <div class="edit-form-hint">Enter each ingredient on a separate line. Use • or - for lists. Include measurements.</div>
+                                            <ValidationMessage For="@(() => vm.Ingredients)" class="edit-validation-error" />
+                                        </div>
+
+                                        <!-- Instructions -->
+                                        <div class="edit-form-section">
+                                            <label for="steps" class="edit-section-label">
+                                                <i class="fas fa-list-ol me-2"></i>Instructions *
+                                            </label>
+                                            <InputTextArea id="steps" @bind-Value="vm.Steps" class="edit-form-textarea" 
+                                                          rows="10" 
+                                                          placeholder="Describe the cooking steps in order:
+1. Preheat oven to 375°F (190°C)
+2. Mix dry ingredients in a large bowl
+3. Add wet ingredients and stir until combined
+4. Pour into prepared baking dish
+5. Bake for 25-30 minutes until golden brown
+6. Let cool before serving" />
+                                            <div class="edit-form-hint">Number each step for clear instructions. Include cooking times and temperatures.</div>
+                                            <ValidationMessage For="@(() => vm.Steps)" class="edit-validation-error" />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Action Buttons -->
+                                <div class="edit-form-actions">
+                                    <button type="button" class="btn-edit-cancel" @onclick="Cancel" disabled="@isSaving">
+                                        <i class="fas fa-times me-2"></i>Cancel
+                                    </button>
+                                    <div class="edit-button-group">
+                                        <button type="submit" class="btn-edit-save" disabled="@isSaving">
+                                            @if (isSaving)
+                                            {
+                                                <i class="fas fa-spinner fa-spin me-2"></i>
+                                                <span>Saving...</span>
+                                            }
+                                            else
+                                            {
+                                                <i class="fas fa-save me-2"></i>
+                                                <span>Save Changes</span>
+                                            }
+                                        </button>
+                                        <button type="button" class="btn-edit-delete" @onclick="DeleteHere" disabled="@isSaving">
+                                            <i class="fas fa-trash me-2"></i>Delete
+                                        </button>
+                                    </div>
+                                </div>
+                            </EditForm>
+                        }
+                    </div>
+                </div>
+            </div>
         </div>
-
-        <div class="mb-3">
-            <label class="form-label">Category (optional)</label>
-            <InputText class="form-control" @bind-Value="vm.Category" />
-            <ValidationMessage For="@(() => vm.Category)" />
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label">Ingredients</label>
-            <InputTextArea class="form-control" rows="4" @bind-Value="vm.Ingredients" />
-            <small class="text-muted">Separate by lines or commas.</small>
-            <ValidationMessage For="@(() => vm.Ingredients)" />
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label">Steps</label>
-            <InputTextArea class="form-control" rows="6" @bind-Value="vm.Steps" />
-            <ValidationMessage For="@(() => vm.Steps)" />
-        </div>
-
-        <div class="d-flex gap-2">
-            <button class="btn btn-primary" disabled="@isSaving">
-                @(isSaving ? "Saving..." : "Save")
-            </button>
-            <button type="button" class="btn btn-secondary" @onclick="Cancel" disabled="@isSaving">
-                Cancel
-            </button>
-            <button type="button" class="btn btn-danger ms-auto" @onclick="DeleteHere" disabled="@isSaving">
-                Delete
-            </button>
-        </div>
-    </EditForm>
-}
+    </div>
+</div>
 
 @code {
     [Parameter] public int id { get; set; }

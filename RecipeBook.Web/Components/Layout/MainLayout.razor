@@ -1,23 +1,123 @@
 ﻿@inherits LayoutComponentBase
+@inject AuthenticationStateProvider AuthStateProvider
 
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <base href="~/" />
+    <link rel="stylesheet" href="css/app.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <title>RecipeBook</title>
+</head>
+<body>
+    <!-- Top Navigation Header -->
+    <header class="header">
+        <nav class="navbar">
+            <div class="nav-container">
+                <!-- Brand on the left -->
+                <div class="nav-brand">
+                    <a href="/" class="brand-link">
+                        <i class="fas fa-utensils"></i>
+                        <span>RecipeBook</span>
+                    </a>
+                </div>
+
+                <!-- Navigation links in the center -->
+                <div class="nav-links">
+                    <a class="nav-link" href="/">
+                        <i class="fas fa-home"></i>
+                        <span>Home</span>
+                    </a>
+                    <a class="nav-link" href="/recipes">
+                        <i class="fas fa-book"></i>
+                        <span>Browse Recipes</span>
+                    </a>
+                    <AuthorizeView>
+                        <Authorized>
+                            <a class="nav-link" href="/recipes/new">
+                                <i class="fas fa-plus"></i>
+                                <span>Create Recipe</span>
+                            </a>
+                            <a class="nav-link" href="/recipes/manage">
+                                <i class="fas fa-list"></i>
+                                <span>My Recipes</span>
+                            </a>
+                        </Authorized>
+                    </AuthorizeView>
+                </div>
+
+                <!-- User section on the right -->
+                <div class="nav-user">
+                    <AuthorizeView>
+                        <Authorized>
+                            <div class="user-dropdown">
+                                <button class="user-toggle">
+                                    <span class="user-avatar">
+                                        <i class="fas fa-user"></i>
+                                    </span>
+                                    <i class="fas fa-chevron-down dropdown-arrow"></i>
+                                </button>
+                                <div class="dropdown-menu">
+                                    <a class="dropdown-item" href="/Identity/Account/Manage">
+                                        <i class="fas fa-user-cog"></i>
+                                        <span>Profile</span>
+                                    </a>
+                                    <form action="/logout" method="get" class="logout-form">
+                                        <button type="submit" class="dropdown-item">
+                                            <i class="fas fa-sign-out-alt"></i>
+                                            <span>Logout</span>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </Authorized>
+                        <NotAuthorized>
+                            <a class="nav-link" href="/Identity/Account/Register">
+                                <i class="fas fa-user-plus"></i>
+                                <span>Register</span>
+                            </a>
+                            <a class="nav-link" href="/Identity/Account/Login">
+                                <i class="fas fa-sign-in-alt"></i>
+                                <span>Login</span>
+                            </a>
+                        </NotAuthorized>
+                    </AuthorizeView>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container-fluid">
+            @Body
+        </div>
+    </main>
+
+    <!-- Blazor Error UI -->
+    <div id="blazor-error-ui" data-nosnippet>
+        An unhandled error has occurred.
+        <a href="." class="reload">Reload</a>
+        <span class="dismiss">🗙</span>
     </div>
 
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-        </div>
-
-        <article class="content px-4">
-            @Body
-        </article>
-    </main>
-</div>
-
-<div id="blazor-error-ui" data-nosnippet>
-    An unhandled error has occurred.
-    <a href="." class="reload">Reload</a>
-    <span class="dismiss">🗙</span>
-</div>
+    <script>
+        // Simple dropdown functionality
+        document.addEventListener('click', function(e) {
+            const dropdowns = document.querySelectorAll('.user-dropdown');
+            dropdowns.forEach(dropdown => {
+                if (!dropdown.contains(e.target)) {
+                    dropdown.classList.remove('active');
+                }
+            });
+            
+            if (e.target.closest('.user-toggle')) {
+                const dropdown = e.target.closest('.user-dropdown');
+                dropdown.classList.toggle('active');
+            }
+        });
+    </script>
+</body>
+</html>

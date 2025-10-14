@@ -1,0 +1,96 @@
+@page "/recipes"
+@using RecipeBook.Web.Data
+@using RecipeBook.Web.Services
+@inject RecipeService RecipeService
+
+<PageTitle>RecipeBook - All Recipes</PageTitle>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3>All Recipes</h3>
+        <AuthorizeView>
+            <Authorized>
+                <a class="btn btn-primary" href="/recipes/new">
+                    <i class="fas fa-plus me-2"></i>Create Recipe
+                </a>
+            </Authorized>
+            <NotAuthorized>
+                <a class="btn btn-outline-primary" href="/Identity/Account/Register">
+                    <i class="fas fa-user-plus me-2"></i>Register to Create Recipes
+                </a>
+            </NotAuthorized>
+        </AuthorizeView>
+    </div>
+
+    @if (recipes == null)
+    {
+        <div class="loading-spinner text-center">
+            <i class="fas fa-spinner fa-spin fa-2x me-2"></i>
+            <p>Loading recipes...</p>
+        </div>
+    }
+    else if (!recipes.Any())
+    {
+        <div class="no-recipes text-center">
+            <i class="fas fa-utensils fa-3x mb-3"></i>
+            <p>No recipes yet.</p>
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            @foreach (var recipe in recipes)
+            {
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card recipe-list-card h-100">
+                        @if (!string.IsNullOrEmpty(recipe.ImagePath))
+                        {
+                            <img src="@recipe.ImagePath" class="card-img-top recipe-image" alt="@recipe.Title" style="height: 200px; object-fit: cover;">
+                        }
+                        else
+                        {
+                            <div class="card-img-top recipe-image-placeholder d-flex align-items-center justify-content-center" style="height: 200px;">
+                                <i class="fas fa-utensils fa-3x text-muted"></i>
+                            </div>
+                        }
+                        
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title">@recipe.Title</h5>
+                            <p class="card-text">
+                                <span class="badge bg-primary">@recipe.Category</span>
+                            </p>
+                            <p class="card-text text-muted small">
+                                <i class="fas fa-clock me-1"></i>
+                                Created @recipe.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy")
+                            </p>
+                            
+                            <div class="mt-auto">
+                                <AuthorizeView>
+                                    <Authorized>
+                                        <a href="/recipes/@recipe.Id" class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-book-open me-1"></i>View Recipe
+                                        </a>
+                                    </Authorized>
+                                    <NotAuthorized>
+                                        <a href="/Identity/Account/Login" class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-sign-in-alt me-1"></i>Login to View
+                                        </a>
+                                    </NotAuthorized>
+                                </AuthorizeView>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private List<Recipe>? recipes;
+
+    protected override async Task OnInitializedAsync()
+    {
+        recipes = await RecipeService.GetAllRecipesAsync();
+    }
+}
