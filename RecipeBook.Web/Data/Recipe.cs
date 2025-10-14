@@ -20,12 +20,12 @@ namespace RecipeBook.Web.Data
         public string Steps { get; set; } = string.Empty;
 
         [MaxLength(255)]
-        public string? ImagePath { get; set; }
+        public string? ImagePath { get; set; }  // Make sure this exists
 
         public string? OwnerId { get; set; }
 
         public DateTime CreatedAt { get; set; }
 
         public DateTime UpdatedAt { get; set; }
-        }
     }
+}

@@ -2,100 +2,284 @@
 @using System.ComponentModel.DataAnnotations
 @using RecipeBook.Web.Data
 @using Microsoft.AspNetCore.Authorization
+@using RecipeBook.Web.Services
 @attribute [Authorize]
-
 @inject AppDbContext Db
 @inject NavigationManager Nav
 @inject AuthenticationStateProvider AuthStateProvider
+@inject FileUploadService FileUploadService
 @rendermode InteractiveServer
 
-<h3>New Recipe</h3>
+<PageTitle>Create New Recipe</PageTitle>
 
-<EditForm Model="model" OnValidSubmit="HandleValidSubmit" FormName="recipe-create"  OnInvalidSubmit="HandleInvalidSubmit">
-    <DataAnnotationsValidator />
-    <ValidationSummary />
+<div class="create-recipe-container">
+    <div class="container-wide">
+        <div class="row justify-content-center">
+            <div class="col-12 col-xl-10">
+                <div class="create-recipe-card">
+                    <div class="recipe-card-header">
+                        <i class="fas fa-plus-circle me-2"></i>
+                        <h2>Create New Recipe</h2>
+                        <p class="header-subtitle">Share your culinary masterpiece with the world</p>
+                    </div>
 
-    <div class="mb-3">
-        <label class="form-label">Title</label>
-        <InputText class="form-control" @bind-Value="model.Title" />
-        <ValidationMessage For="@(() => model.Title)" />
+                    <div class="recipe-card-body">
+                        <EditForm Model="model" OnValidSubmit="HandleValidSubmit" class="recipe-form">
+                            <DataAnnotationsValidator />
+                            <ValidationSummary class="alert alert-danger" />
+
+                            <div class="form-row">
+                                <!-- Left Column: Image Upload -->
+                                <div class="form-column image-column">
+                                    <!-- Recipe Image Upload -->
+                                    <div class="form-section">
+                                        <label class="section-label">
+                                            <i class="fas fa-image me-2"></i>Recipe Image
+                                        </label>
+                                        
+                                        @if (!string.IsNullOrEmpty(imagePath))
+                                        {
+                                            <div class="image-preview-container">
+                                                <img src="@imagePath" class="image-preview" alt="Recipe preview" />
+                                                <button type="button" class="btn-remove-image" @onclick="RemoveImage">
+                                                    <i class="fas fa-times"></i> Remove Image
+                                                </button>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="image-upload-container">
+                                                <InputFile id="recipeImage" 
+                                                          accept=".jpg,.jpeg,.png,.gif,.webp" 
+                                                          OnChange="HandleFileSelected" 
+                                                          class="file-input" />
+                                                <label for="recipeImage" class="upload-area">
+                                                    <div class="upload-content">
+                                                        <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                                                        <p class="upload-text">Click to upload recipe image</p>
+                                                        <p class="upload-subtext">JPG, PNG, GIF, WEBP up to 5MB</p>
+                                                        <p class="upload-subtext">Recommended: 800x600px or larger</p>
+                                                    </div>
+                                                </label>
+                                            </div>
+                                        }
+
+                                        @if (uploadError)
+                                        {
+                                            <div class="upload-error">
+                                                <i class="fas fa-exclamation-triangle me-2"></i>@uploadErrorMessage
+                                            </div>
+                                        }
+
+                                        @if (isUploading)
+                                        {
+                                            <div class="upload-loading">
+                                                <i class="fas fa-spinner fa-spin me-2"></i>Uploading image...
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+
+                                <!-- Right Column: Form Fields -->
+                                <div class="form-column fields-column">
+                                    <!-- Recipe Title -->
+                                    <div class="form-section">
+                                        <label for="title" class="section-label">
+                                            <i class="fas fa-heading me-2"></i>Recipe Title *
+                                        </label>
+                                        <InputText id="title" @bind-Value="model.Title" class="form-input" 
+                                                  placeholder="Enter your delicious recipe title..." />
+                                        <ValidationMessage For="@(() => model.Title)" class="validation-error" />
+                                    </div>
+
+                                    <!-- Category -->
+                                    <div class="form-section">
+                                        <label for="category" class="section-label">
+                                            <i class="fas fa-tag me-2"></i>Category
+                                        </label>
+                                        <InputText id="category" @bind-Value="model.Category" class="form-input" 
+                                                  placeholder="e.g., Italian, Dessert, Vegan, Breakfast, etc." />
+                                        <div class="form-hint">Helps users find your recipe easily</div>
+                                    </div>
+
+                                    <!-- Ingredients -->
+                                    <div class="form-section">
+                                        <label for="ingredients" class="section-label">
+                                            <i class="fas fa-list-ul me-2"></i>Ingredients *
+                                        </label>
+                                        <InputTextArea id="ingredients" @bind-Value="model.Ingredients" class="form-textarea" 
+                                                      rows="8" 
+                                                      placeholder="List each ingredient on a new line. You can use bullet points:
+• 2 cups all-purpose flour
+• 1 teaspoon salt
+• 3 cloves garlic, minced
+• 1 tablespoon olive oil
+• 1 cup grated cheese
+• Fresh herbs for garnish" />
+                                        <div class="form-hint">Enter each ingredient on a separate line. Use • or - for lists. Include measurements.</div>
+                                        <ValidationMessage For="@(() => model.Ingredients)" class="validation-error" />
+                                    </div>
+
+                                    <!-- Instructions -->
+                                    <div class="form-section">
+                                        <label for="steps" class="section-label">
+                                            <i class="fas fa-list-ol me-2"></i>Instructions *
+                                        </label>
+                                        <InputTextArea id="steps" @bind-Value="model.Steps" class="form-textarea" 
+                                                      rows="10" 
+                                                      placeholder="Describe the cooking steps in order:
+1. Preheat oven to 375°F (190°C)
+2. Mix dry ingredients in a large bowl
+3. Add wet ingredients and stir until combined
+4. Pour into prepared baking dish
+5. Bake for 25-30 minutes until golden brown
+6. Let cool before serving" />
+                                        <div class="form-hint">Number each step for clear instructions. Include cooking times and temperatures.</div>
+                                        <ValidationMessage For="@(() => model.Steps)" class="validation-error" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="form-actions">
+                                <button type="button" class="btn-cancel" @onclick="Cancel">
+                                    <i class="fas fa-times me-2"></i>Cancel
+                                </button>
+                                <button type="submit" class="btn-submit" disabled="@isSubmitting">
+                                    @if (isSubmitting)
+                                    {
+                                        <i class="fas fa-spinner fa-spin me-2"></i>
+                                        <span>Creating Recipe...</span>
+                                    }
+                                    else
+                                    {
+                                        <i class="fas fa-save me-2"></i>
+                                        <span>Create Recipe</span>
+                                    }
+                                </button>
+                            </div>
+                        </EditForm>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-
-    <div class="mb-3">
-        <label class="form-label">Category (optional)</label>
-        <InputText class="form-control" @bind-Value="model.Category" />
-    </div>
-
-    <div class="mb-3">
-        <label class="form-label">Ingredients</label>
-        <InputTextArea class="form-control" rows="4" @bind-Value="model.Ingredients" />
-        <small class="text-muted">Separate by lines or commas.</small>
-        <ValidationMessage For="@(() => model.Ingredients)" />
-    </div>
-
-    <div class="mb-3">
-        <label class="form-label">Steps</label>
-        <InputTextArea class="form-control" rows="6" @bind-Value="model.Steps" />
-        <ValidationMessage For="@(() => model.Steps)" />
-    </div>
-
-    <button type="submit" class="btn btn-primary">Save Recipe</button>
-    <button type="button" class="btn btn-outline-primary ms-2" @onclick="Cancel">Cancel</button>
-</EditForm>
+</div>
 
 @code {
-    // Usamos un view-model para no tocar OwnerId/Fechas desde el formulario
     private RecipeInput model = new();
+    private string? imagePath;
+    private bool isSubmitting = false;
+    private bool isUploading = false;
+    private bool uploadError = false;
+    private string uploadErrorMessage = string.Empty;
+    private string? currentUserId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        currentUserId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+    }
 
     private async Task HandleValidSubmit()
     {
-        // Obtener el usuario logueado
-        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
-        var ownerId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        isSubmitting = true;
 
-        var entity = new Recipe
+        try
         {
-            Title = model.Title.Trim(),
-            Category = string.IsNullOrWhiteSpace(model.Category) ? null : model.Category.Trim(),
-            Ingredients = model.Ingredients.Trim(),
-            Steps = model.Steps.Trim(),
-            OwnerId = ownerId,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
+            var entity = new Recipe
+            {
+                Title = model.Title.Trim(),
+                Category = string.IsNullOrWhiteSpace(model.Category) ? null : model.Category.Trim(),
+                Ingredients = model.Ingredients.Trim(),
+                Steps = model.Steps.Trim(),
+                ImagePath = imagePath,
+                OwnerId = currentUserId,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
 
-        Db.Recipes.Add(entity);
-        await Db.SaveChangesAsync();
+            Db.Recipes.Add(entity);
+            await Db.SaveChangesAsync();
 
-        // Volver al listado (lo haremos en /recipes)
+            Nav.NavigateTo($"/recipes/{entity.Id}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error creating recipe: {ex.Message}");
+            isSubmitting = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        await ProcessFile(e.File);
+    }
+
+    private async Task ProcessFile(IBrowserFile file)
+    {
+        isUploading = true;
+        uploadError = false;
+        StateHasChanged();
+
+        try
+        {
+            var uploadedPath = await FileUploadService.UploadFileAsync(file);
+            if (!string.IsNullOrEmpty(uploadedPath))
+            {
+                imagePath = uploadedPath;
+            }
+        }
+        catch (Exception ex)
+        {
+            uploadError = true;
+            uploadErrorMessage = ex.Message;
+        }
+        finally
+        {
+            isUploading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void RemoveImage()
+    {
+        if (!string.IsNullOrEmpty(imagePath))
+        {
+            FileUploadService.DeleteFile(imagePath);
+            imagePath = null;
+            StateHasChanged();
+        }
+    }
+
+    private void Cancel()
+    {
+        if (!string.IsNullOrEmpty(imagePath))
+        {
+            FileUploadService.DeleteFile(imagePath);
+        }
         Nav.NavigateTo("/recipes");
     }
 
-    private void Cancel() => Nav.NavigateTo("/recipes");
-
-    // View-model con validaciones
-    public class RecipeInput
+    private void HandleInvalidSubmit()
     {
-        [Required, StringLength(120)]
-        public string Title { get; set; } = string.Empty;
-
-        [StringLength(60)]
-        public string? Category { get; set; }
-
-        [Required]
-        public string Ingredients { get; set; } = string.Empty;
-
-        [Required]
-        public string Steps { get; set; } = string.Empty;
+        Console.WriteLine("Invalid submit.");
     }
 
-    private void HandleInvalidSubmit(EditContext ctx)
-{
-    Console.WriteLine("Invalid submit. Fields:");
-    foreach (var msg in ctx.GetValidationMessages())
-        Console.WriteLine($" - {msg}");
-}
-}
+    public class RecipeInput
+    {
+        [Required(ErrorMessage = "Recipe title is required")]
+        [StringLength(120, ErrorMessage = "Title must be less than 120 characters")]
+        public string Title { get; set; } = string.Empty;
 
+        [StringLength(60, ErrorMessage = "Category must be less than 60 characters")]
+        public string? Category { get; set; }
 
+        [Required(ErrorMessage = "Ingredients are required")]
+        public string Ingredients { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Instructions are required")]
+        public string Steps { get; set; } = string.Empty;
+    }
+}
