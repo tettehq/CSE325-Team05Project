@@ -6,8 +6,9 @@ using RecipeBook.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Use SQL Server for production deployment (Render or Azure)
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 {
@@ -25,48 +26,41 @@ builder.Services.AddAuthentication();
 builder.Services.AddAuthorization();
 builder.Services.AddCascadingAuthenticationState();
 
-builder.Services.AddRazorPages(); 
-
-// Add this with other service registrations
+builder.Services.AddRazorPages();
 builder.Services.AddScoped<FileUploadService>();
-
-// Add RecipeService to DI container
 builder.Services.AddScoped<RecipeService>();
 
-// Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 var app = builder.Build();
 
-// Initialize sample data
+// Initialize sample data (optional — comment out if using real DB)
 using (var scope = app.Services.CreateScope())
 {
     var recipeService = scope.ServiceProvider.GetRequiredService<RecipeService>();
     await recipeService.InitializeSampleDataAsync();
 }
 
-// Configure the HTTP request pipeline.
+// Configure the HTTP request pipeline
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.UseAntiforgery();
 
 app.MapStaticAssets();
-app.MapRazorPages(); // para las páginas de Identity
+app.MapRazorPages(); // Identity pages
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
-// Logout endpoint (GET) — cierra sesión y redirige al home
+// Logout endpoint
 app.MapGet("/logout", async (SignInManager<ApplicationUser> signInManager) =>
 {
     await signInManager.SignOutAsync();
