@@ -11,11 +11,11 @@
             <span class="d-none d-md-inline">@User.Identity?.Name</span>
         </a>
         <ul class="dropdown-menu dropdown-menu-end shadow-sm">
-            <li><a class="dropdown-item" href="/Identity/Account/Manage">Mi perfil</a></li>
+            <li><a class="dropdown-item" href="/Identity/Account/Manage">My Profile</a></li>
             <li><hr class="dropdown-divider" /></li>
             <li>
                 <form method="post" action="/Identity/Account/Logout" class="px-3 py-2">
-                    <button type="submit" class="btn btn-sm btn-outline-danger w-100">Salir</button>
+                    <button type="submit" class="btn btn-sm btn-outline-danger w-100">Log Out</button>
                 </form>
             </li>
         </ul>
@@ -24,7 +24,7 @@
 else
 {
     <li class="nav-item ms-2">
-        <a class="btn btn-sm btn-outline-primary me-2" href="/Identity/Account/Login">Ingresar</a>
-        <a class="btn btn-sm btn-primary" href="/Identity/Account/Register">Crear cuenta</a>
+        <a class="btn btn-sm btn-outline-primary me-2" href="/Identity/Account/Login">Log In</a>
+        <a class="btn btn-sm btn-primary" href="/Identity/Account/Register">Create an Account</a>
     </li>
 }
